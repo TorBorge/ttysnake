@@ -46,14 +46,10 @@ impl Game {
         let target_frame_time = Duration::from_secs_f32(1.0 / target_fps as f32);
 
         let mut frames_elapsed: i32 = 0;
-        self.snake.grow_snake();
-        self.snake.grow_snake();
-        self.snake.grow_snake();
-        self.snake.grow_snake();
-        self.snake.grow_snake();
-        self.snake.grow_snake();
-        self.snake.grow_snake();
-        self.snake.grow_snake();
+
+        for _ in 0..5 {
+            self.snake.grow_snake();
+        }
 
         self.renderer.queue(self.apple.render());
         self.renderer.queue(self.snake.render_snake());
@@ -95,6 +91,7 @@ impl Game {
             if frames_elapsed == target_fps {
                 frames_elapsed = 0
             }
+
             let elapsed = frame_start.elapsed();
             if elapsed < target_frame_time {
                 std::thread::sleep(target_frame_time - elapsed);

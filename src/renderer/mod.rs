@@ -12,9 +12,6 @@ use crossterm::{
     terminal,
 };
 
-const TILE_W: i16 = 1;
-const TILE_H: i16 = 1;
-
 use crate::util::Position;
 
 pub trait Renderable {
@@ -60,20 +57,16 @@ impl Renderer {
         Ok(r)
     }
 
-    pub fn translate_pos(pos: Position) -> (u16, u16) {
-        let (w, h) = terminal::size().expect("unable to get screen size");
+    pub fn translate_pos(&self, pos: Position) -> (u16, u16) {
+        let (w, h) = self.size;
 
-        let origin_x = (w as i32 / 2) - (TILE_W as i32 / 2);
-        let origin_y = (h as i32 / 2) - (TILE_H as i32 / 2);
+        let origin_x = w as i16 / 2;
+        let origin_y = h as i16 / 2;
 
-        let x = origin_x + pos.0 as i32 * TILE_W as i32;
-        let y = origin_y - pos.1 as i32 * TILE_H as i32;
+        let x = origin_x + pos.0;
+        let y = origin_y - pos.1;
 
-        if x >= 0
-            && y >= 0
-            && x + (TILE_W as i32 - 1) < w as i32
-            && y + (TILE_H as i32 - 1) < h as i32
-        {
+        if x >= 0 && y >= 0 && x < w as i16 && y < h as i16 {
             (x as u16, y as u16)
         } else {
             panic!("position out of bounds: ({x}, {y}) for screen {w}x{h}");
@@ -81,8 +74,10 @@ impl Renderer {
     }
 
     pub fn put(&mut self) -> Result<(), Box<(dyn Error + 'static)>> {
-        for cmd in self.draw_cmds.drain(..) {
-            let (x, y) = Self::translate_pos(cmd.pos);
+        let cmds = std::mem::take(&mut self.draw_cmds);
+
+        for cmd in cmds {
+            let (x, y) = self.translate_pos(cmd.pos);
             self.output
                 .queue(MoveTo(x, y))?
                 .queue(PrintStyledContent(cmd.content))?;
